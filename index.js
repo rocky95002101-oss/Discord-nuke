@@ -58,4 +58,4 @@ client.once('ready', () => {
   });
 });
 
-client.login('YOUR_BOT_TOKEN');
+client.login('MTI5MzQzMjUyNTc5MTgyNjAxMA.Gdz0ax.II6PoKyXjbqfV5yCKND_hghd54h0sTwKHU5yJ0');

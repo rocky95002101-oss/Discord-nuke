@@ -1,7 +1,7 @@
 {
   "name": "nuke-bot",
   "version": "1.0.0",
-  "description": "Discord nuke bot",
+    "description": "Discord nuke bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

